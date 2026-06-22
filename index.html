@@ -13,13 +13,9 @@
   }
   body{ font-family:"RO Sans","Source Sans Pro",Verdana,Arial,sans-serif; background:var(--bg); color:#222; }
 
-  /* ============ RIJKSOVERHEID BANNER ============ */
-  .ro-banner{ background:#fff; border-bottom:1px solid #e0e0d8; }
-  .ro-inner{ max-width:1260px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px; }
-  .ro-lint{ flex:none; }
-  .ro-word{ display:flex; flex-direction:column; line-height:1.05; }
-  .ro-word .l1{ font-size:19px; font-weight:700; color:#154273; letter-spacing:.2px; }
-  .ro-word .l2{ font-size:19px; font-weight:700; color:#154273; letter-spacing:.2px; }
+  /* ============ ZIN BANNER ============ */
+  .zin-banner{ background:#fff; }
+  .zin-banner img{ width:100%; max-width:960px; display:block; margin:0 auto; }
 
   /* ============ GROENE MENUBALK ============ */
   .nav{ background:var(--groen); }
@@ -115,23 +111,10 @@
 </head>
 <body>
 
-<!-- ====================== RIJKSOVERHEID BANNER ====================== -->
-<header class="ro-banner">
-  <div class="ro-inner">
-    <!-- Recreatie van het Rijksoverheid-lint in de huisstijl -->
-    <svg class="ro-lint" width="40" height="50" viewBox="0 0 40 50" aria-hidden="true">
-      <rect x="2"  y="2" width="6" height="46" fill="#154273"/>
-      <rect x="11" y="2" width="6" height="46" fill="#154273"/>
-      <rect x="20" y="2" width="6" height="46" fill="#154273"/>
-      <rect x="29" y="2" width="6" height="46" fill="#154273"/>
-      <rect x="2"  y="20" width="33" height="6" fill="#fff"/>
-      <rect x="2"  y="20" width="33" height="2" fill="#154273" opacity=".25"/>
-    </svg>
-    <div class="ro-word">
-      <span class="l1">Rijksoverheid</span>
-    </div>
-  </div>
-</header>
+<!-- ====================== ZORGINSTITUUT NEDERLAND BANNER ====================== -->
+<div class="zin-banner">
+  <img src="ZinBanner.png" alt="Zorginstituut Nederland">
+</div>
 
 <!-- ====================== GROENE MENUBALK ====================== -->
 <nav class="nav">
