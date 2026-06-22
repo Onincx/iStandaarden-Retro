@@ -109,6 +109,25 @@
   .hint{ font-size:12px; color:#888; margin-top:6px; }
   .footer{ text-align:center; font-size:11px; color:#999; padding:18px; }
   .sync-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#27ae60; margin-right:4px; }
+  /* ============ ACTIEPUNTEN ============ */
+  .actions-section{ background:#fff; border:1px solid #d0d5c8; border-top:4px solid var(--groen-donker); border-radius:3px; }
+  .actions-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #e8ebe0; }
+  .actions-head h2{ font-size:16px; font-weight:700; color:var(--groen-donker); }
+  .actions-list{ padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+  .action-item{ border:1px solid #dde2d6; border-left:4px solid var(--groen); border-radius:3px; padding:10px 14px; background:#fafdf6; }
+  .action-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .action-title{ font-weight:700; color:#1f2d12; font-size:14px; }
+  .action-desc{ font-size:13px; color:#444; margin-top:4px; line-height:1.45; white-space:pre-wrap; word-break:break-word; }
+  .action-meta{ display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:#666; }
+  .action-meta b{ color:#333; font-weight:600; }
+  .action-edit{ cursor:pointer; color:#bbb; font-size:14px; flex:none; }
+  .action-edit:hover{ color:var(--groen); }
+  .action-empty{ font-size:13px; color:#aaa; padding:6px 0; }
+  .due-soon{ color:#a04000; font-weight:600; }
+  .due-over{ color:var(--rood); font-weight:600; }
+  .sess-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 11px; border:1px solid #ddd; border-radius:3px; margin-bottom:6px; }
+  .sess-row .meta{ font-size:12px; color:#666; }
+  .sess-row b{ color:#222; }
   .sync-dot.local{ background:#e6a817; }
   @media (max-width:560px){ .stats{ grid-template-columns:repeat(2,1fr); } .nav-brand .sub{ display:none; } }
 </style>
@@ -133,6 +152,7 @@
       <button class="nav-btn" id="btn-done" onclick="setPhase('done')">✓ Afronden</button>
       <span class="nav-sep"></span>
       <button class="nav-btn" onclick="exportResults()">⬇ Exporteren</button>
+      <button class="nav-btn" id="btn-clear" onclick="clearAllCards()" style="display:none">🗑 Kaartjes wissen</button>
       <button class="nav-btn primary" id="btn-invite" onclick="copyInvite()">🔗 Code delen</button>
     </div>
   </div>
@@ -144,7 +164,14 @@
     <h3>Retrospectief</h3>
     <div class="tab-row">
       <div class="tab active" id="tab-join" onclick="switchTab('join')">Deelnemen</div>
-      <div class="tab" id="tab-new" onclick="switchTab('new')">Sessie aanmaken (beheerder)</div>
+      <div class="tab" id="tab-new" onclick="switchTab('new')">Aanmaken</div>
+      <div class="tab" id="tab-manage" onclick="switchTab('manage')">Beheren</div>
+    </div>
+    <div id="pane-manage" style="display:none">
+      <label>Beheerderswachtwoord</label><input id="mng-admin" type="password" placeholder="Alleen voor de beheerder">
+      <label>Uw naam</label><input id="mng-name" placeholder="Bijv. Jan de Vries" maxlength="40">
+      <div class="modal-footer" style="margin-top:12px"><button class="btn" onclick="loadSessionsList()">Eerdere sessies tonen</button></div>
+      <div id="sessions-list" style="margin-top:8px"></div>
     </div>
     <div id="pane-join">
       <label>Uw naam</label><input id="join-name" placeholder="Bijv. Marie Jansen" maxlength="40">
@@ -161,6 +188,23 @@
       <label>Naam kolom 2</label><input id="new-col-minus" maxlength="40" value="Verbeterpunten">
       <label>Naam kolom 3</label><input id="new-col-actie" maxlength="40" value="Actiepunten">
       <div class="modal-footer"><button class="btn" onclick="createSession()">Sessie aanmaken</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== ACTIEPUNT MODAL ====================== -->
+<div id="action-modal" class="modal-bg" style="display:none">
+  <div class="modal">
+    <h3 id="action-modal-title">Actiepunt</h3>
+    <input type="hidden" id="act-id">
+    <label>Titel</label><input id="act-title" maxlength="120" placeholder="Korte titel">
+    <label>Omschrijving</label><textarea id="act-desc" style="width:100%;min-height:70px;border:1px solid #ccc;border-radius:3px;padding:9px 11px;font-family:inherit;font-size:14px;resize:vertical" placeholder="Vrije omschrijving"></textarea>
+    <label>Eigenaar</label><input id="act-owner" maxlength="60" placeholder="Wie pakt dit op?">
+    <label>Streefdatum</label><input id="act-due" type="date">
+    <div class="modal-footer">
+      <button class="btn secondary" id="act-delete" onclick="deleteActionFromModal()" style="margin-right:auto;display:none;border-color:#c0392b;color:#c0392b">Verwijderen</button>
+      <button class="btn secondary" onclick="closeActionForm()">Annuleren</button>
+      <button class="btn" onclick="saveAction()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -198,6 +242,15 @@
         <div class="add-card" data-add="actie"><textarea id="in-actie" placeholder="Voeg een kaartje toe…"></textarea>
           <div class="add-card-footer"><label><input type="checkbox" id="pr-actie" checked> Privé houden</label><button class="btn small" onclick="addCard('actie')">+ Toevoegen</button></div></div></div>
     </div>
+
+    <!-- ============ ACTIEPUNTEN-OVERZICHT ============ -->
+    <div class="actions-section">
+      <div class="actions-head">
+        <h2>Actiepunten</h2>
+        <button class="btn small" id="btn-add-action" onclick="openActionForm()" style="display:none">+ Actiepunt</button>
+      </div>
+      <div id="actions-list" class="actions-list"></div>
+    </div>
   </div>
   <div class="footer"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">verbinden…</span></div>
 </div>
@@ -218,9 +271,10 @@ const VOTES_PER_COL = 3;
 const DEFAULT_COLS = { plus:'Ging goed', minus:'Verbeterpunten', actie:'Actiepunten' };
 
 let me = { name:'' };
-let isAdmin = false;         // alleen de aanmaker van de sessie is beheerder
+let isAdmin = false;         // alleen de aanmaker/beheerder van de sessie is beheerder
 let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase,columns }
 let cards = [];              // [{id,session_code,col,content,author,is_private,voters}]
+let actions = [];            // [{id,session_code,title,description,owner,due_date}]
 let participants = new Set();
 let roomKey = '';
 let channel = null;          // BroadcastChannel (lokale modus)
@@ -228,10 +282,10 @@ let tick = null;
 
 /* ---------- Setup ---------- */
 function switchTab(t){
-  document.getElementById('tab-new').classList.toggle('active',t==='new');
-  document.getElementById('tab-join').classList.toggle('active',t==='join');
-  document.getElementById('pane-new').style.display=t==='new'?'block':'none';
-  document.getElementById('pane-join').style.display=t==='join'?'block':'none';
+  ['join','new','manage'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',t===x);
+    document.getElementById('pane-'+x).style.display = t===x?'block':'none';
+  });
 }
 function cols(){ return (session && session.columns) ? session.columns : DEFAULT_COLS; }
 function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
@@ -282,6 +336,10 @@ async function joinSession(){
 
 async function enterSession(){
   roomKey='retro_'+session.code;
+  if(ONLINE){
+    const {data:ad}=await SB.from('actions').select('*').eq('session_code',session.code);
+    actions=ad||[];
+  }
   document.getElementById('setup-modal').style.display='none';
   document.getElementById('main').style.display='block';
   document.getElementById('nav-actions').style.display='flex';
@@ -290,11 +348,45 @@ async function enterSession(){
   document.getElementById('sync-dot').className='sync-dot'+(ONLINE?'':' local');
   document.getElementById('sync-text').textContent=ONLINE?'Online gesynchroniseerd via Supabase':'Lokale modus (zelfde apparaat / tabbladen)';
   location.hash=session.code;
+  // Beheerder-functies tonen
+  document.getElementById('btn-clear').style.display = isAdmin?'inline-flex':'none';
+  document.getElementById('btn-add-action').style.display = isAdmin?'inline-flex':'none';
   ['plus','minus','actie'].forEach(c=>{ if(isAdmin) document.getElementById('e-'+c).classList.add('admin'); });
   participants.add(me.name);
   await subscribe();
   startTick();
   render();
+}
+
+/* ---------- Eerdere sessies (beheerder) ---------- */
+async function loadSessionsList(){
+  const pw=val('mng-admin'), name=val('mng-name');
+  const required=(window.RETRO_CONFIG && window.RETRO_CONFIG.ADMIN_PASSWORD) || '';
+  if(!required) return alert('Er is nog geen beheerderswachtwoord ingesteld. Zet ADMIN_PASSWORD in config.js.');
+  if(pw!==required) return alert('Onjuist beheerderswachtwoord.');
+  if(!name) return alert('Vul uw naam in.');
+  me.name=name;
+  const box=document.getElementById('sessions-list');
+  if(!ONLINE){ box.innerHTML='<p class="hint">Eerdere sessies bekijken werkt alleen met Supabase (online modus).</p>'; return; }
+  box.innerHTML='<p class="hint">Bezig met laden…</p>';
+  const {data,error}=await SB.from('sessions').select('*').order('created_at',{ascending:false});
+  if(error) return box.innerHTML='<p class="hint">Fout: '+esc(error.message)+'</p>';
+  if(!data||!data.length){ box.innerHTML='<p class="hint">Nog geen sessies gevonden.</p>'; return; }
+  box.innerHTML=data.map(s=>{
+    const d=s.created_at?new Date(s.created_at).toLocaleDateString('nl-NL'):'';
+    return '<div class="sess-row"><div><b>'+esc(s.title)+'</b><div class="meta">Code '+s.code+' · '+d+' · fase: '+esc(s.phase)+'</div></div>'+
+      '<button class="btn small" onclick="openExisting(\''+s.code+'\')">Openen</button></div>';
+  }).join('');
+}
+
+async function openExisting(code){
+  if(!ONLINE) return;
+  isAdmin=true;
+  const {data,error}=await SB.from('sessions').select('*').eq('code',code).single();
+  if(error||!data) return alert('Sessie niet gevonden.');
+  session=data;
+  const {data:cd}=await SB.from('cards').select('*').eq('session_code',code); cards=cd||[];
+  await enterSession();
 }
 
 /* ---------- Sync ---------- */
@@ -305,20 +397,22 @@ async function subscribe(){
         p=>{ if(p.new){ session=p.new; render(); } })
       .on('postgres_changes',{event:'*',schema:'public',table:'cards',filter:'session_code=eq.'+session.code},
         async()=>{ const {data}=await SB.from('cards').select('*').eq('session_code',session.code); cards=data||[]; render(); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'actions',filter:'session_code=eq.'+session.code},
+        async()=>{ const {data}=await SB.from('actions').select('*').eq('session_code',session.code); actions=data||[]; render(); })
       .subscribe();
   } else {
     if('BroadcastChannel' in window){
       channel=new BroadcastChannel(roomKey);
-      channel.onmessage=e=>{ session=e.data.session; cards=e.data.cards; render(); };
+      channel.onmessage=e=>{ session=e.data.session; cards=e.data.cards; actions=e.data.actions||[]; render(); };
     }
-    window.addEventListener('storage',e=>{ if(e.key===roomKey&&e.newValue){ const s=JSON.parse(e.newValue); session=s.session; cards=s.cards; render(); }});
+    window.addEventListener('storage',e=>{ if(e.key===roomKey&&e.newValue){ const s=JSON.parse(e.newValue); session=s.session; cards=s.cards; actions=s.actions||[]; render(); }});
   }
 }
 async function pushSession(){
   if(ONLINE){ await SB.from('sessions').update(session).eq('code',session.code); }
   else saveLocal();
 }
-function saveLocal(){ localStorage.setItem(roomKey,JSON.stringify({session,cards})); if(channel) channel.postMessage({session,cards}); }
+function saveLocal(){ localStorage.setItem(roomKey,JSON.stringify({session,cards,actions})); if(channel) channel.postMessage({session,cards,actions}); }
 
 /* ---------- Kaartjes ---------- */
 async function addCard(col){
@@ -345,6 +439,65 @@ async function voteCard(id){
   }
   if(ONLINE){ await SB.from('cards').update({voters}).eq('id',id); }
   else { c.voters=voters; saveLocal(); render(); }
+}
+
+/* ---------- Alle kaartjes wissen (beheerder) ---------- */
+async function clearAllCards(){
+  if(!isAdmin) return;
+  if(!confirm('Weet je zeker dat je ALLE kaartjes van deze sessie wilt verwijderen? Dit kan niet ongedaan worden gemaakt. (Actiepunten blijven behouden.)')) return;
+  if(ONLINE){ const {error}=await SB.from('cards').delete().eq('session_code',session.code); if(error) return alert(error.message); cards=[]; render(); }
+  else { cards=[]; saveLocal(); render(); }
+}
+
+/* ---------- Actiepunten (alleen beheerder maakt/wijzigt) ---------- */
+function openActionForm(cardId){
+  if(!isAdmin) return;
+  document.getElementById('action-modal-title').textContent='Nieuw actiepunt';
+  document.getElementById('act-id').value='';
+  document.getElementById('act-title').value='';
+  document.getElementById('act-desc').value = cardId ? (cards.find(c=>c.id===cardId)?.content||'') : '';
+  document.getElementById('act-owner').value='';
+  document.getElementById('act-due').value='';
+  document.getElementById('act-delete').style.display='none';
+  document.getElementById('action-modal').style.display='flex';
+}
+function editAction(id){
+  if(!isAdmin) return;
+  const a=actions.find(x=>x.id===id); if(!a) return;
+  document.getElementById('action-modal-title').textContent='Actiepunt wijzigen';
+  document.getElementById('act-id').value=a.id;
+  document.getElementById('act-title').value=a.title||'';
+  document.getElementById('act-desc').value=a.description||'';
+  document.getElementById('act-owner').value=a.owner||'';
+  document.getElementById('act-due').value=a.due_date||'';
+  document.getElementById('act-delete').style.display='inline-flex';
+  document.getElementById('action-modal').style.display='flex';
+}
+function closeActionForm(){ document.getElementById('action-modal').style.display='none'; }
+
+async function saveAction(){
+  if(!isAdmin) return;
+  const id=document.getElementById('act-id').value;
+  const title=val('act-title'); if(!title) return alert('Geef het actiepunt een titel.');
+  const rec={ title, description:val('act-desc'), owner:val('act-owner'), due_date:document.getElementById('act-due').value||null };
+  if(id){
+    if(ONLINE){ const {error}=await SB.from('actions').update(rec).eq('id',id); if(error) return alert(error.message); }
+    else { const a=actions.find(x=>x.id===id); Object.assign(a,rec); saveLocal(); render(); }
+  } else {
+    rec.id=session.code+'-act-'+Date.now()+'-'+Math.floor(Math.random()*999);
+    rec.session_code=session.code;
+    if(ONLINE){ const {error}=await SB.from('actions').insert(rec); if(error) return alert(error.message); }
+    else { actions.push(rec); saveLocal(); render(); }
+  }
+  closeActionForm();
+}
+async function deleteActionFromModal(){
+  if(!isAdmin) return;
+  const id=document.getElementById('act-id').value; if(!id) return;
+  if(!confirm('Dit actiepunt verwijderen?')) return;
+  if(ONLINE){ await SB.from('actions').delete().eq('id',id); }
+  else { actions=actions.filter(x=>x.id!==id); saveLocal(); render(); }
+  closeActionForm();
 }
 
 /* ---------- Timer (deadline-model, multi-device) ---------- */
@@ -435,12 +588,34 @@ function render(){
       if(c.is_private&&mine&&session.phase==='adding') h+='<div class="card-actions"><span class="private-label">🔒 Privé</span></div>';
       if(session.phase==='voting'&&!hidden){ const v=vs.includes(me.name); h+='<div class="card-actions"><button class="vote-btn'+(v?' voted':'')+'" onclick="voteCard(\''+c.id+'\')"'+(mine?' disabled':'')+'>♥ '+vs.length+'</button>'+(mine?'<span style="font-size:11px;color:#aaa">eigen kaartje</span>':'')+'</div>'; }
       else if(['revealed','done'].includes(session.phase)&&!hidden&&vs.length) h+='<div class="card-actions"><span class="vote-count-pill">♥ '+vs.length+'</span></div>';
+      if(isAdmin&&!hidden) h+='<div class="card-actions"><button class="vote-btn" style="border-color:#154a03;color:#154a03" onclick="openActionForm(\''+c.id+'\')">→ Maak actiepunt</button></div>';
       d.innerHTML=h; list.appendChild(d);
     });
     document.getElementById('c-'+col).textContent=cc.length+' kaartje'+(cc.length!==1?'s':'');
     document.getElementById('s-'+col).textContent=cc.length;
   });
   document.getElementById('s-deeln').textContent=participants.size;
+  renderActions();
+}
+
+function renderActions(){
+  const box=document.getElementById('actions-list');
+  if(!actions.length){ box.innerHTML='<div class="action-empty">Nog geen actiepunten.'+(isAdmin?' Maak er een via een kaartje of de knop hierboven.':'')+'</div>'; return; }
+  const today=new Date(); today.setHours(0,0,0,0);
+  const sorted=[...actions].sort((a,b)=>{ if(!a.due_date) return 1; if(!b.due_date) return -1; return a.due_date<b.due_date?-1:1; });
+  box.innerHTML=sorted.map(a=>{
+    let dueHtml='—';
+    if(a.due_date){
+      const d=new Date(a.due_date+'T00:00:00');
+      const txt=d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'});
+      let cls=''; if(d<today) cls='due-over'; else if((d-today)/86400000<=7) cls='due-soon';
+      dueHtml='<span class="'+cls+'">'+txt+'</span>';
+    }
+    return '<div class="action-item"><div class="action-top"><div class="action-title">'+esc(a.title||'')+'</div>'+
+      (isAdmin?'<span class="action-edit" title="Wijzigen" onclick="editAction(\''+a.id+'\')">✎</span>':'')+'</div>'+
+      (a.description?'<div class="action-desc">'+esc(a.description)+'</div>':'')+
+      '<div class="action-meta"><span>Eigenaar: <b>'+(a.owner?esc(a.owner):'—')+'</b></span><span>Streefdatum: <b>'+dueHtml+'</b></span></div></div>';
+  }).join('');
 }
 
 /* ---------- Delen / export ---------- */
@@ -451,8 +626,11 @@ function copyInvite(){
 }
 function exportResults(){
   let o='RETROSPECTIEF: '+session.title+'\nCode: '+session.code+'\nDeelnemers: '+[...participants].join(', ')+'\n\n';
-  const T={plus:'GING GOED',minus:'VERBETERPUNTEN',actie:'ACTIEPUNTEN'};
-  ['plus','minus','actie'].forEach(col=>{ o+='== '+T[col]+' ==\n'; const cc=cards.filter(c=>c.col===col).sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length); o+=cc.length?'':'(geen)\n'; cc.forEach(c=>o+='['+(c.voters||[]).length+' ♥] '+c.content+'  — '+c.author+'\n'); o+='\n'; });
+  const T={plus:'GING GOED',minus:'VERBETERPUNTEN',actie:'ACTIEPUNTEN'}; void T;
+  ['plus','minus','actie'].forEach(col=>{ o+='== '+(cols()[col]||col).toUpperCase()+' ==\n'; const cc=cards.filter(c=>c.col===col).sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length); o+=cc.length?'':'(geen)\n'; cc.forEach(c=>o+='['+(c.voters||[]).length+' ♥] '+c.content+'  — '+c.author+'\n'); o+='\n'; });
+  o+='== ACTIEPUNTEN ==\n';
+  if(!actions.length) o+='(geen)\n';
+  actions.forEach(a=>{ o+='• '+(a.title||'')+(a.owner?'  (eigenaar: '+a.owner+')':'')+(a.due_date?'  [streefdatum: '+a.due_date+']':'')+'\n'; if(a.description) o+='   '+a.description.replace(/\n/g,'\n   ')+'\n'; });
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o],{type:'text/plain'})); a.download='retro-'+session.code+'.txt'; a.click();
 }
 
