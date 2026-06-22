@@ -337,8 +337,8 @@ async function joinSession(){
 async function enterSession(){
   roomKey='retro_'+session.code;
   if(ONLINE){
-    const {data:ad}=await SB.from('actions').select('*').eq('session_code',session.code);
-    actions=ad||[];
+    const {data:ad,error:ae}=await SB.from('actions').select('*').eq('session_code',session.code);
+    actions = (!ae && ad) ? ad : [];
   }
   document.getElementById('setup-modal').style.display='none';
   document.getElementById('main').style.display='block';
@@ -392,14 +392,21 @@ async function openExisting(code){
 /* ---------- Sync ---------- */
 async function subscribe(){
   if(ONLINE){
+    // Sessies + kaartjes op hun eigen kanaal
     SB.channel('room-'+session.code)
       .on('postgres_changes',{event:'*',schema:'public',table:'sessions',filter:'code=eq.'+session.code},
         p=>{ if(p.new){ session=p.new; render(); } })
       .on('postgres_changes',{event:'*',schema:'public',table:'cards',filter:'session_code=eq.'+session.code},
-        async()=>{ const {data}=await SB.from('cards').select('*').eq('session_code',session.code); cards=data||[]; render(); })
-      .on('postgres_changes',{event:'*',schema:'public',table:'actions',filter:'session_code=eq.'+session.code},
-        async()=>{ const {data}=await SB.from('actions').select('*').eq('session_code',session.code); actions=data||[]; render(); })
+        async()=>{ const {data,error}=await SB.from('cards').select('*').eq('session_code',session.code); if(!error&&data){ cards=data; render(); } })
       .subscribe();
+    // Actiepunten op een APART kanaal, zodat een ontbrekende tabel
+    // de synchronisatie van kaartjes nooit kan verstoren.
+    try{
+      SB.channel('actions-'+session.code)
+        .on('postgres_changes',{event:'*',schema:'public',table:'actions',filter:'session_code=eq.'+session.code},
+          async()=>{ const {data,error}=await SB.from('actions').select('*').eq('session_code',session.code); if(!error&&data){ actions=data; render(); } })
+        .subscribe();
+    }catch(e){ /* actiepunten-tabel mogelijk nog niet aangemaakt */ }
   } else {
     if('BroadcastChannel' in window){
       channel=new BroadcastChannel(roomKey);
