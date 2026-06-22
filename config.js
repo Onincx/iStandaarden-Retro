@@ -14,5 +14,5 @@ window.RETRO_CONFIG = {
      aanmaken. Deelnemers gebruiken alleen de sessiecode.
      Let op: dit staat in de frontend, dus het houdt collega's
      uit de aanmaak-knop, maar het is geen sterke beveiliging. */
-  ADMIN_PASSWORD: "verander-dit-wachtwoord"
+  ADMIN_PASSWORD: "RetroTool2026!"
 };
