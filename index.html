@@ -67,6 +67,10 @@
   .col-actie .column-title{ color:#a04000; }
   .col-plus .column-title{ color:#1a6b35; }
   .col-count{ font-size:11px; color:#888; }
+  .edit-col{ cursor:pointer; color:#bbb; font-size:13px; margin-left:6px; display:none; }
+  .edit-col:hover{ color:var(--groen); }
+  .column-title:hover .edit-col.admin{ display:inline; }
+  .edit-col.admin{ display:none; }
   .cards-list{ padding:10px; display:flex; flex-direction:column; gap:8px; flex:1; min-height:40px; }
   .card{ background:#fafaf5; border:1px solid #d8ddd0; border-radius:3px; padding:10px 12px; font-size:13px; }
   .card.private{ background:#f0f4e8; border:1px dashed #8ab56a; }
@@ -139,20 +143,24 @@
   <div class="modal">
     <h3>Retrospectief</h3>
     <div class="tab-row">
-      <div class="tab active" id="tab-new" onclick="switchTab('new')">Nieuwe sessie</div>
-      <div class="tab" id="tab-join" onclick="switchTab('join')">Deelnemen</div>
+      <div class="tab active" id="tab-join" onclick="switchTab('join')">Deelnemen</div>
+      <div class="tab" id="tab-new" onclick="switchTab('new')">Sessie aanmaken (beheerder)</div>
     </div>
-    <div id="pane-new">
+    <div id="pane-join">
+      <label>Uw naam</label><input id="join-name" placeholder="Bijv. Marie Jansen" maxlength="40">
+      <label>Sessiecode</label><input id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase">
+      <p class="hint">Vraag de code aan de beheerder die de sessie heeft aangemaakt.</p>
+      <div class="modal-footer"><button class="btn" onclick="joinSession()">Deelnemen</button></div>
+    </div>
+    <div id="pane-new" style="display:none">
+      <label>Beheerderswachtwoord</label><input id="new-admin" type="password" placeholder="Alleen voor de beheerder">
       <label>Uw naam</label><input id="new-name" placeholder="Bijv. Jan de Vries" maxlength="40">
       <label>Sessienaam</label><input id="new-session" placeholder="Bijv. Sprint 14 Retrospectief" maxlength="60">
       <label>Timer (minuten)</label><input id="new-timer" type="number" value="5" min="1" max="60">
+      <label>Naam kolom 1</label><input id="new-col-plus" maxlength="40" value="Ging goed">
+      <label>Naam kolom 2</label><input id="new-col-minus" maxlength="40" value="Verbeterpunten">
+      <label>Naam kolom 3</label><input id="new-col-actie" maxlength="40" value="Actiepunten">
       <div class="modal-footer"><button class="btn" onclick="createSession()">Sessie aanmaken</button></div>
-    </div>
-    <div id="pane-join" style="display:none">
-      <label>Uw naam</label><input id="join-name" placeholder="Bijv. Marie Jansen" maxlength="40">
-      <label>Sessiecode</label><input id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase">
-      <p class="hint">Vraag de code aan de persoon die de sessie heeft aangemaakt.</p>
-      <div class="modal-footer"><button class="btn" onclick="joinSession()">Deelnemen</button></div>
     </div>
   </div>
 </div>
@@ -170,24 +178,24 @@
 
   <div class="main">
     <div class="stats">
-      <div class="stat-card"><div class="stat-val" id="s-plus" style="color:#1a6b35">0</div><div class="stat-lbl">Ging goed</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-minus" style="color:var(--rood)">0</div><div class="stat-lbl">Verbeterpunten</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-actie" style="color:var(--oranje)">0</div><div class="stat-lbl">Actiepunten</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-plus" style="color:#1a6b35">0</div><div class="stat-lbl" id="sl-plus">Ging goed</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-minus" style="color:var(--rood)">0</div><div class="stat-lbl" id="sl-minus">Verbeterpunten</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-actie" style="color:var(--oranje)">0</div><div class="stat-lbl" id="sl-actie">Actiepunten</div></div>
       <div class="stat-card"><div class="stat-val" id="s-deeln">1</div><div class="stat-lbl">Deelnemers</div></div>
     </div>
     <div class="info-msg" id="phase-msg">Voeg uw kaartjes toe. Ze blijven privé tot ze onthuld worden.</div>
     <div class="columns">
-      <div class="column col-plus"><div class="column-header"><div class="column-title">👍 Ging goed</div><span class="col-count" id="c-plus">0</span></div>
+      <div class="column col-plus"><div class="column-header"><div class="column-title"><span id="t-plus">Ging goed</span><span class="edit-col" id="e-plus" onclick="editCol('plus')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-plus">0</span></div>
         <div class="cards-list" id="list-plus"></div>
-        <div class="add-card" data-add="plus"><textarea id="in-plus" placeholder="Wat ging goed?"></textarea>
+        <div class="add-card" data-add="plus"><textarea id="in-plus" placeholder="Voeg een kaartje toe…"></textarea>
           <div class="add-card-footer"><label><input type="checkbox" id="pr-plus" checked> Privé houden</label><button class="btn small" onclick="addCard('plus')">+ Toevoegen</button></div></div></div>
-      <div class="column col-minus"><div class="column-header"><div class="column-title">👎 Verbeterpunten</div><span class="col-count" id="c-minus">0</span></div>
+      <div class="column col-minus"><div class="column-header"><div class="column-title"><span id="t-minus">Verbeterpunten</span><span class="edit-col" id="e-minus" onclick="editCol('minus')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-minus">0</span></div>
         <div class="cards-list" id="list-minus"></div>
-        <div class="add-card" data-add="minus"><textarea id="in-minus" placeholder="Wat kan beter?"></textarea>
+        <div class="add-card" data-add="minus"><textarea id="in-minus" placeholder="Voeg een kaartje toe…"></textarea>
           <div class="add-card-footer"><label><input type="checkbox" id="pr-minus" checked> Privé houden</label><button class="btn small" onclick="addCard('minus')">+ Toevoegen</button></div></div></div>
-      <div class="column col-actie"><div class="column-header"><div class="column-title">⚡ Actiepunten</div><span class="col-count" id="c-actie">0</span></div>
+      <div class="column col-actie"><div class="column-header"><div class="column-title"><span id="t-actie">Actiepunten</span><span class="edit-col" id="e-actie" onclick="editCol('actie')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-actie">0</span></div>
         <div class="cards-list" id="list-actie"></div>
-        <div class="add-card" data-add="actie"><textarea id="in-actie" placeholder="Welke actie nemen we?"></textarea>
+        <div class="add-card" data-add="actie"><textarea id="in-actie" placeholder="Voeg een kaartje toe…"></textarea>
           <div class="add-card-footer"><label><input type="checkbox" id="pr-actie" checked> Privé houden</label><button class="btn small" onclick="addCard('actie')">+ Toevoegen</button></div></div></div>
     </div>
   </div>
@@ -207,8 +215,11 @@ const SB = (window.RETRO_CONFIG && window.RETRO_CONFIG.SUPABASE_URL && window.su
 const ONLINE = !!SB;
 const VOTES_PER_COL = 3;
 
+const DEFAULT_COLS = { plus:'Ging goed', minus:'Verbeterpunten', actie:'Actiepunten' };
+
 let me = { name:'' };
-let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase }
+let isAdmin = false;         // alleen de aanmaker van de sessie is beheerder
+let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase,columns }
 let cards = [];              // [{id,session_code,col,content,author,is_private,voters}]
 let participants = new Set();
 let roomKey = '';
@@ -222,16 +233,26 @@ function switchTab(t){
   document.getElementById('pane-new').style.display=t==='new'?'block':'none';
   document.getElementById('pane-join').style.display=t==='join'?'block':'none';
 }
+function cols(){ return (session && session.columns) ? session.columns : DEFAULT_COLS; }
 function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
 const val=id=>document.getElementById(id).value.trim();
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 async function createSession(){
+  const adminPw=val('new-admin');
+  const required=(window.RETRO_CONFIG && window.RETRO_CONFIG.ADMIN_PASSWORD) || '';
+  if(required && adminPw!==required) return alert('Onjuist beheerderswachtwoord.');
+  if(!required) return alert('Er is nog geen beheerderswachtwoord ingesteld. Zet ADMIN_PASSWORD in config.js.');
   const name=val('new-name'), title=val('new-session'), mins=parseInt(document.getElementById('new-timer').value)||5;
   if(!name) return alert('Vul uw naam in.');
   if(!title) return alert('Vul een sessienaam in.');
-  me.name=name;
-  session={ code:genCode(), title, total_seconds:mins*60, remaining_seconds:mins*60, running:false, deadline:null, phase:'adding' };
+  me.name=name; isAdmin=true;
+  const columns={
+    plus: val('new-col-plus')||DEFAULT_COLS.plus,
+    minus: val('new-col-minus')||DEFAULT_COLS.minus,
+    actie: val('new-col-actie')||DEFAULT_COLS.actie
+  };
+  session={ code:genCode(), title, total_seconds:mins*60, remaining_seconds:mins*60, running:false, deadline:null, phase:'adding', columns };
   cards=[];
   if(ONLINE){
     const {error}=await SB.from('sessions').insert(session);
@@ -244,7 +265,7 @@ async function joinSession(){
   const name=val('join-name'), code=val('join-code').toUpperCase();
   if(!name) return alert('Vul uw naam in.');
   if(!code) return alert('Vul de sessiecode in.');
-  me.name=name;
+  me.name=name; isAdmin=false;
   if(ONLINE){
     const {data,error}=await SB.from('sessions').select('*').eq('code',code).single();
     if(error||!data) return alert('Sessie niet gevonden.');
@@ -269,6 +290,7 @@ async function enterSession(){
   document.getElementById('sync-dot').className='sync-dot'+(ONLINE?'':' local');
   document.getElementById('sync-text').textContent=ONLINE?'Online gesynchroniseerd via Supabase':'Lokale modus (zelfde apparaat / tabbladen)';
   location.hash=session.code;
+  ['plus','minus','actie'].forEach(c=>{ if(isAdmin) document.getElementById('e-'+c).classList.add('admin'); });
   participants.add(me.name);
   await subscribe();
   startTick();
@@ -349,6 +371,20 @@ function updateTimerUI(){
   if(r===0) document.getElementById('btn-reveal').disabled=false;
 }
 
+/* ---------- Kolomnamen wijzigen (alleen beheerder) ---------- */
+async function editCol(col){
+  if(!isAdmin) return;
+  const current=cols()[col];
+  const naam=prompt('Nieuwe naam voor deze kolom:', current);
+  if(naam===null) return;
+  const trimmed=naam.trim(); if(!trimmed) return;
+  const columns={ ...cols(), [col]:trimmed };
+  session.columns=columns;
+  await pushSession();
+  if(!ONLINE) saveLocal();
+  render();
+}
+
 /* ---------- Fases ---------- */
 async function setPhase(p){
   session.phase=p;
@@ -377,6 +413,11 @@ function applyPhaseUI(){
 function render(){
   if(!session) return;
   applyPhaseUI(); updateTimerUI();
+  const cn=cols();
+  ['plus','minus','actie'].forEach(c=>{
+    document.getElementById('t-'+c).textContent=cn[c];
+    document.getElementById('sl-'+c).textContent=cn[c];
+  });
   cards.forEach(c=>{ if(c.author) participants.add(c.author); });
   ['plus','minus','actie'].forEach(col=>{
     const list=document.getElementById('list-'+col);
