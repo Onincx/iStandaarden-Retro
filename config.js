@@ -1,0 +1,13 @@
+/* ===========================================================
+   Supabase-configuratie
+   Vul hieronder de waarden in uit je Supabase-project:
+   Supabase dashboard → Project Settings → API
+   -----------------------------------------------------------
+   Laat de waarden leeg ("") om in LOKALE modus te draaien
+   (sync werkt dan alleen tussen tabbladen op hetzelfde apparaat).
+   De anon-key is een publieke sleutel en mag in de frontend staan.
+   =========================================================== */
+window.RETRO_CONFIG = {
+  SUPABASE_URL: "https://telacficcoyrncazhdbm.supabase.co",        // bijv. "https://abcd1234.supabase.co"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlbGFjZmljY295cm5jYXpoZGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTIzMjIsImV4cCI6MjA5NzY4ODMyMn0.qV9Ltq5ZQ_IOQ05McTZ6Nb2Padvsq4ZAsjvyLMfBJLI"    // de "anon public" key
+};

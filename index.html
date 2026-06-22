@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#39870c">
+<title>iStandaarden Retro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --groen:#39870c; --groen-donker:#154a03; --groen-mid:#2e6e09; --groen-licht:#4ca015;
+    --rood:#c0392b; --oranje:#e67e22; --bg:#f3f3ee;
+  }
+  body{ font-family:"RO Sans","Source Sans Pro",Verdana,Arial,sans-serif; background:var(--bg); color:#222; }
+
+  /* ============ RIJKSOVERHEID BANNER ============ */
+  .ro-banner{ background:#fff; border-bottom:1px solid #e0e0d8; }
+  .ro-inner{ max-width:1260px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px; }
+  .ro-lint{ flex:none; }
+  .ro-word{ display:flex; flex-direction:column; line-height:1.05; }
+  .ro-word .l1{ font-size:19px; font-weight:700; color:#154273; letter-spacing:.2px; }
+  .ro-word .l2{ font-size:19px; font-weight:700; color:#154273; letter-spacing:.2px; }
+
+  /* ============ GROENE MENUBALK ============ */
+  .nav{ background:var(--groen); }
+  .nav-inner{ max-width:1260px; margin:0 auto; padding:0 12px; display:flex; align-items:center; flex-wrap:wrap; gap:2px; min-height:46px; }
+  .nav-brand{ color:#fff; font-size:16px; font-weight:700; padding:0 14px 0 6px; display:flex; align-items:center; gap:8px; margin-right:auto; }
+  .nav-brand .sub{ font-size:11px; font-weight:400; opacity:.85; }
+  .nav-btn{ background:transparent; border:none; color:#fff; font-family:inherit; font-size:13.5px; font-weight:500; padding:12px 13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; border-bottom:3px solid transparent; }
+  .nav-btn:hover{ background:var(--groen-mid); }
+  .nav-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .nav-btn:disabled:hover{ background:transparent; }
+  .nav-btn.primary{ background:rgba(255,255,255,.15); }
+  .nav-btn.primary:hover{ background:rgba(255,255,255,.28); }
+  .nav-sep{ width:1px; height:22px; background:rgba(255,255,255,.3); margin:0 4px; }
+
+  /* ============ SUB-BALK ============ */
+  .subbar{ background:#fff; border-bottom:1px solid #d8d8cc; }
+  .subbar-inner{ max-width:1260px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .timer-label{ font-size:11px; color:#666; }
+  .timer-display{ font-size:30px; font-weight:700; color:var(--groen); font-variant-numeric:tabular-nums; min-width:80px; }
+  .timer-display.urgent{ color:var(--rood); }
+  .progress-bar{ height:5px; background:#e8ebe0; border-radius:3px; overflow:hidden; flex:1; min-width:90px; }
+  .progress-fill{ height:100%; background:var(--groen); transition:width 1s linear; }
+  .progress-fill.urgent{ background:var(--rood); }
+  .phase-badge{ padding:5px 13px; border-radius:13px; font-size:12px; font-weight:600; background:#e8f4e0; color:var(--groen-mid); border:1px solid #b3d98c; white-space:nowrap; }
+  .phase-badge.revealed{ background:#e0eefb; color:#1f5fa5; border-color:#9cc4ee; }
+  .phase-badge.voting{ background:#fef3cd; color:#856404; border-color:#ffc107; }
+  .phase-badge.done{ background:#e2e8f0; color:#475569; border-color:#94a3b8; }
+  .room-pill{ font-size:12px; color:#555; }
+  .room-pill b{ font-family:monospace; color:var(--groen); letter-spacing:1px; font-size:14px; }
+
+  .main{ max-width:1260px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:18px; }
+  .info-msg{ padding:11px 14px; border-radius:3px; background:#e8f4e0; border:1px solid #b3d98c; color:var(--groen-mid); font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; }
+  .info-msg.warn{ background:#fef3cd; border-color:#ffc107; color:#856404; }
+  .info-msg.blue{ background:#e0eefb; border-color:#9cc4ee; color:#1f5fa5; }
+
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .stat-card{ background:#fff; border:1px solid #d0d5c8; border-radius:3px; padding:10px 14px; text-align:center; }
+  .stat-val{ font-size:22px; font-weight:700; color:var(--groen); }
+  .stat-lbl{ font-size:11px; color:#666; margin-top:2px; }
+
+  .columns{ display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:16px; }
+  .column{ background:#fff; border-radius:3px; border:1px solid #d0d5c8; border-top:4px solid var(--groen); display:flex; flex-direction:column; }
+  .col-minus{ border-top-color:var(--rood); }
+  .col-actie{ border-top-color:var(--oranje); }
+  .col-plus{ border-top-color:#27ae60; }
+  .column-header{ padding:12px 14px 9px; border-bottom:1px solid #e8ebe0; display:flex; align-items:center; justify-content:space-between; }
+  .column-title{ font-size:14px; font-weight:700; color:var(--groen-donker); }
+  .col-minus .column-title{ color:#922b21; }
+  .col-actie .column-title{ color:#a04000; }
+  .col-plus .column-title{ color:#1a6b35; }
+  .col-count{ font-size:11px; color:#888; }
+  .cards-list{ padding:10px; display:flex; flex-direction:column; gap:8px; flex:1; min-height:40px; }
+  .card{ background:#fafaf5; border:1px solid #d8ddd0; border-radius:3px; padding:10px 12px; font-size:13px; }
+  .card.private{ background:#f0f4e8; border:1px dashed #8ab56a; }
+  .card.mine{ background:#eef7e6; border-color:#7dba4d; }
+  .card-author{ font-size:11px; color:#888; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+  .card-text{ color:#222; line-height:1.45; word-break:break-word; }
+  .card-text.locked{ color:#9aa890; font-style:italic; }
+  .card-actions{ display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .vote-btn{ display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:12px; border:1px solid var(--groen); background:#fff; color:var(--groen); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .vote-btn:hover{ background:#eef5e8; }
+  .vote-btn.voted{ background:var(--groen); color:#fff; }
+  .vote-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .vote-count-pill{ font-size:11px; color:var(--groen); font-weight:700; }
+  .private-label{ font-size:10px; color:#5f7d3f; font-weight:600; background:#dff0cf; padding:2px 8px; border-radius:10px; }
+  .del-x{ margin-left:auto; color:#bbb; cursor:pointer; font-size:13px; }
+  .del-x:hover{ color:var(--rood); }
+  .add-card{ padding:10px; border-top:1px solid #e8ebe0; }
+  .add-card textarea{ width:100%; border:1px solid #ccc; border-radius:3px; padding:7px 9px; font-size:13px; resize:vertical; min-height:58px; font-family:inherit; }
+  .add-card textarea:focus{ outline:2px solid var(--groen); outline-offset:1px; border-color:var(--groen); }
+  .add-card-footer{ display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:6px; flex-wrap:wrap; }
+  .add-card-footer label{ font-size:12px; color:#555; display:flex; align-items:center; gap:4px; cursor:pointer; }
+  .btn{ padding:7px 14px; border-radius:3px; border:2px solid var(--groen); background:var(--groen); color:#fff; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn.secondary{ background:#fff; color:var(--groen); }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+
+  .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:100; padding:16px; }
+  .modal{ background:#fff; border-radius:4px; padding:24px; max-width:440px; width:100%; border-top:4px solid var(--groen); }
+  .modal h3{ font-size:17px; font-weight:700; color:var(--groen-donker); margin-bottom:14px; }
+  .modal label{ font-size:13px; font-weight:600; color:#333; display:block; margin-bottom:4px; margin-top:10px; }
+  .modal input{ width:100%; border:1px solid #ccc; border-radius:3px; padding:9px 11px; font-size:14px; font-family:inherit; }
+  .modal input:focus{ outline:2px solid var(--groen); border-color:var(--groen); }
+  .modal-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .tab-row{ display:flex; gap:6px; margin-bottom:14px; }
+  .tab{ flex:1; padding:8px; text-align:center; font-size:13px; font-weight:600; border:1px solid #ccc; border-radius:3px; cursor:pointer; background:#f5f5f0; color:#666; }
+  .tab.active{ background:var(--groen); color:#fff; border-color:var(--groen); }
+  .hint{ font-size:12px; color:#888; margin-top:6px; }
+  .footer{ text-align:center; font-size:11px; color:#999; padding:18px; }
+  .sync-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#27ae60; margin-right:4px; }
+  .sync-dot.local{ background:#e6a817; }
+  @media (max-width:560px){ .stats{ grid-template-columns:repeat(2,1fr); } .nav-brand .sub{ display:none; } }
+</style>
+</head>
+<body>
+
+<!-- ====================== RIJKSOVERHEID BANNER ====================== -->
+<header class="ro-banner">
+  <div class="ro-inner">
+    <!-- Recreatie van het Rijksoverheid-lint in de huisstijl -->
+    <svg class="ro-lint" width="40" height="50" viewBox="0 0 40 50" aria-hidden="true">
+      <rect x="2"  y="2" width="6" height="46" fill="#154273"/>
+      <rect x="11" y="2" width="6" height="46" fill="#154273"/>
+      <rect x="20" y="2" width="6" height="46" fill="#154273"/>
+      <rect x="29" y="2" width="6" height="46" fill="#154273"/>
+      <rect x="2"  y="20" width="33" height="6" fill="#fff"/>
+      <rect x="2"  y="20" width="33" height="2" fill="#154273" opacity=".25"/>
+    </svg>
+    <div class="ro-word">
+      <span class="l1">Rijksoverheid</span>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== GROENE MENUBALK ====================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">iStandaarden Retro <span class="sub">· Zorginstituut Nederland</span></div>
+    <div id="nav-actions" style="display:none; align-items:center; flex-wrap:wrap;">
+      <button class="nav-btn" id="btn-timer" onclick="toggleTimer()">▶ Start</button>
+      <button class="nav-btn" onclick="resetTimer()">↻ Reset</button>
+      <span class="nav-sep"></span>
+      <button class="nav-btn" id="btn-reveal" onclick="setPhase('revealed')" disabled>👁 Onthullen</button>
+      <button class="nav-btn" id="btn-vote" onclick="setPhase('voting')" disabled>♥ Stemmen</button>
+      <button class="nav-btn" id="btn-done" onclick="setPhase('done')">✓ Afronden</button>
+      <span class="nav-sep"></span>
+      <button class="nav-btn" onclick="exportResults()">⬇ Exporteren</button>
+      <button class="nav-btn primary" id="btn-invite" onclick="copyInvite()">🔗 Code delen</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ====================== SETUP ====================== -->
+<div id="setup-modal" class="modal-bg">
+  <div class="modal">
+    <h3>Retrospectief</h3>
+    <div class="tab-row">
+      <div class="tab active" id="tab-new" onclick="switchTab('new')">Nieuwe sessie</div>
+      <div class="tab" id="tab-join" onclick="switchTab('join')">Deelnemen</div>
+    </div>
+    <div id="pane-new">
+      <label>Uw naam</label><input id="new-name" placeholder="Bijv. Jan de Vries" maxlength="40">
+      <label>Sessienaam</label><input id="new-session" placeholder="Bijv. Sprint 14 Retrospectief" maxlength="60">
+      <label>Timer (minuten)</label><input id="new-timer" type="number" value="5" min="1" max="60">
+      <div class="modal-footer"><button class="btn" onclick="createSession()">Sessie aanmaken</button></div>
+    </div>
+    <div id="pane-join" style="display:none">
+      <label>Uw naam</label><input id="join-name" placeholder="Bijv. Marie Jansen" maxlength="40">
+      <label>Sessiecode</label><input id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase">
+      <p class="hint">Vraag de code aan de persoon die de sessie heeft aangemaakt.</p>
+      <div class="modal-footer"><button class="btn" onclick="joinSession()">Deelnemen</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================== SUB-BALK + APP ====================== -->
+<div id="main" style="display:none">
+  <div class="subbar">
+    <div class="subbar-inner">
+      <div><div class="timer-label">Resterende tijd</div><div class="timer-display" id="timer-disp">05:00</div></div>
+      <div class="progress-bar"><div class="progress-fill" id="timer-prog" style="width:100%"></div></div>
+      <span class="phase-badge" id="phase-badge">Kaartjes aanmaken</span>
+      <span class="room-pill">Code <b id="h-code"></b> · u bent <b id="h-name" style="font-family:inherit;color:#333"></b></span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat-card"><div class="stat-val" id="s-plus" style="color:#1a6b35">0</div><div class="stat-lbl">Ging goed</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-minus" style="color:var(--rood)">0</div><div class="stat-lbl">Verbeterpunten</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-actie" style="color:var(--oranje)">0</div><div class="stat-lbl">Actiepunten</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-deeln">1</div><div class="stat-lbl">Deelnemers</div></div>
+    </div>
+    <div class="info-msg" id="phase-msg">Voeg uw kaartjes toe. Ze blijven privé tot ze onthuld worden.</div>
+    <div class="columns">
+      <div class="column col-plus"><div class="column-header"><div class="column-title">👍 Ging goed</div><span class="col-count" id="c-plus">0</span></div>
+        <div class="cards-list" id="list-plus"></div>
+        <div class="add-card" data-add="plus"><textarea id="in-plus" placeholder="Wat ging goed?"></textarea>
+          <div class="add-card-footer"><label><input type="checkbox" id="pr-plus" checked> Privé houden</label><button class="btn small" onclick="addCard('plus')">+ Toevoegen</button></div></div></div>
+      <div class="column col-minus"><div class="column-header"><div class="column-title">👎 Verbeterpunten</div><span class="col-count" id="c-minus">0</span></div>
+        <div class="cards-list" id="list-minus"></div>
+        <div class="add-card" data-add="minus"><textarea id="in-minus" placeholder="Wat kan beter?"></textarea>
+          <div class="add-card-footer"><label><input type="checkbox" id="pr-minus" checked> Privé houden</label><button class="btn small" onclick="addCard('minus')">+ Toevoegen</button></div></div></div>
+      <div class="column col-actie"><div class="column-header"><div class="column-title">⚡ Actiepunten</div><span class="col-count" id="c-actie">0</span></div>
+        <div class="cards-list" id="list-actie"></div>
+        <div class="add-card" data-add="actie"><textarea id="in-actie" placeholder="Welke actie nemen we?"></textarea>
+          <div class="add-card-footer"><label><input type="checkbox" id="pr-actie" checked> Privé houden</label><button class="btn small" onclick="addCard('actie')">+ Toevoegen</button></div></div></div>
+    </div>
+  </div>
+  <div class="footer"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">verbinden…</span></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+/* ===================================================================
+   Backend-abstractie: Supabase (online, multi-device) met fallback
+   naar lokale modus (localStorage + BroadcastChannel, zelfde apparaat).
+   =================================================================== */
+const SB = (window.RETRO_CONFIG && window.RETRO_CONFIG.SUPABASE_URL && window.supabase)
+  ? window.supabase.createClient(window.RETRO_CONFIG.SUPABASE_URL, window.RETRO_CONFIG.SUPABASE_ANON_KEY)
+  : null;
+const ONLINE = !!SB;
+const VOTES_PER_COL = 3;
+
+let me = { name:'' };
+let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase }
+let cards = [];              // [{id,session_code,col,content,author,is_private,voters}]
+let participants = new Set();
+let roomKey = '';
+let channel = null;          // BroadcastChannel (lokale modus)
+let tick = null;
+
+/* ---------- Setup ---------- */
+function switchTab(t){
+  document.getElementById('tab-new').classList.toggle('active',t==='new');
+  document.getElementById('tab-join').classList.toggle('active',t==='join');
+  document.getElementById('pane-new').style.display=t==='new'?'block':'none';
+  document.getElementById('pane-join').style.display=t==='join'?'block':'none';
+}
+function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
+const val=id=>document.getElementById(id).value.trim();
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+async function createSession(){
+  const name=val('new-name'), title=val('new-session'), mins=parseInt(document.getElementById('new-timer').value)||5;
+  if(!name) return alert('Vul uw naam in.');
+  if(!title) return alert('Vul een sessienaam in.');
+  me.name=name;
+  session={ code:genCode(), title, total_seconds:mins*60, remaining_seconds:mins*60, running:false, deadline:null, phase:'adding' };
+  cards=[];
+  if(ONLINE){
+    const {error}=await SB.from('sessions').insert(session);
+    if(error) return alert('Kon sessie niet aanmaken: '+error.message);
+  }
+  await enterSession();
+}
+
+async function joinSession(){
+  const name=val('join-name'), code=val('join-code').toUpperCase();
+  if(!name) return alert('Vul uw naam in.');
+  if(!code) return alert('Vul de sessiecode in.');
+  me.name=name;
+  if(ONLINE){
+    const {data,error}=await SB.from('sessions').select('*').eq('code',code).single();
+    if(error||!data) return alert('Sessie niet gevonden.');
+    session=data;
+    const {data:cd}=await SB.from('cards').select('*').eq('session_code',code);
+    cards=cd||[];
+  } else {
+    roomKey='retro_'+code; const raw=localStorage.getItem(roomKey);
+    if(!raw) return alert('Sessie niet gevonden op dit apparaat. Zonder Supabase werkt sync alleen tussen tabbladen op hetzelfde apparaat.');
+    const s=JSON.parse(raw); session=s.session; cards=s.cards;
+  }
+  await enterSession();
+}
+
+async function enterSession(){
+  roomKey='retro_'+session.code;
+  document.getElementById('setup-modal').style.display='none';
+  document.getElementById('main').style.display='block';
+  document.getElementById('nav-actions').style.display='flex';
+  document.getElementById('h-code').textContent=session.code;
+  document.getElementById('h-name').textContent=me.name;
+  document.getElementById('sync-dot').className='sync-dot'+(ONLINE?'':' local');
+  document.getElementById('sync-text').textContent=ONLINE?'Online gesynchroniseerd via Supabase':'Lokale modus (zelfde apparaat / tabbladen)';
+  location.hash=session.code;
+  participants.add(me.name);
+  await subscribe();
+  startTick();
+  render();
+}
+
+/* ---------- Sync ---------- */
+async function subscribe(){
+  if(ONLINE){
+    SB.channel('room-'+session.code)
+      .on('postgres_changes',{event:'*',schema:'public',table:'sessions',filter:'code=eq.'+session.code},
+        p=>{ if(p.new){ session=p.new; render(); } })
+      .on('postgres_changes',{event:'*',schema:'public',table:'cards',filter:'session_code=eq.'+session.code},
+        async()=>{ const {data}=await SB.from('cards').select('*').eq('session_code',session.code); cards=data||[]; render(); })
+      .subscribe();
+  } else {
+    if('BroadcastChannel' in window){
+      channel=new BroadcastChannel(roomKey);
+      channel.onmessage=e=>{ session=e.data.session; cards=e.data.cards; render(); };
+    }
+    window.addEventListener('storage',e=>{ if(e.key===roomKey&&e.newValue){ const s=JSON.parse(e.newValue); session=s.session; cards=s.cards; render(); }});
+  }
+}
+async function pushSession(){
+  if(ONLINE){ await SB.from('sessions').update(session).eq('code',session.code); }
+  else saveLocal();
+}
+function saveLocal(){ localStorage.setItem(roomKey,JSON.stringify({session,cards})); if(channel) channel.postMessage({session,cards}); }
+
+/* ---------- Kaartjes ---------- */
+async function addCard(col){
+  const ta=document.getElementById('in-'+col); const content=ta.value.trim(); if(!content) return;
+  const card={ id:session.code+'-'+Date.now()+'-'+Math.floor(Math.random()*999), session_code:session.code, col, content, author:me.name, is_private:document.getElementById('pr-'+col).checked, voters:[] };
+  ta.value='';
+  if(ONLINE){ const {error}=await SB.from('cards').insert(card); if(error) alert(error.message); }
+  else { cards.push(card); saveLocal(); render(); }
+}
+async function deleteCard(id){
+  const c=cards.find(x=>x.id===id); if(!c||c.author!==me.name) return;
+  if(ONLINE){ await SB.from('cards').delete().eq('id',id); }
+  else { cards=cards.filter(x=>x.id!==id); saveLocal(); render(); }
+}
+async function voteCard(id){
+  if(session.phase!=='voting') return;
+  const c=cards.find(x=>x.id===id); if(!c||c.author===me.name) return;
+  let voters=Array.isArray(c.voters)?[...c.voters]:[];
+  if(voters.includes(me.name)){ voters=voters.filter(v=>v!==me.name); }
+  else {
+    const used=cards.filter(x=>x.col===c.col && (x.voters||[]).includes(me.name)).length;
+    if(used>=VOTES_PER_COL) return alert('U heeft al '+VOTES_PER_COL+' stemmen gebruikt in deze kolom.');
+    voters.push(me.name);
+  }
+  if(ONLINE){ await SB.from('cards').update({voters}).eq('id',id); }
+  else { c.voters=voters; saveLocal(); render(); }
+}
+
+/* ---------- Timer (deadline-model, multi-device) ---------- */
+async function toggleTimer(){
+  if(session.running){ session.remaining_seconds=remaining(); session.running=false; session.deadline=null; }
+  else { if(remaining()<=0) return; session.deadline=Date.now()+remaining()*1000; session.running=true; }
+  await pushSession(); render();
+}
+async function resetTimer(){ session.running=false; session.deadline=null; session.remaining_seconds=session.total_seconds; await pushSession(); render(); }
+function remaining(){
+  if(session.running && session.deadline) return Math.max(0,Math.ceil((session.deadline-Date.now())/1000));
+  return session.remaining_seconds;
+}
+function startTick(){ if(tick) clearInterval(tick); tick=setInterval(()=>{ if(session){ updateTimerUI(); if(session.running && remaining()<=0){ session.running=false; session.deadline=null; session.remaining_seconds=0; document.getElementById('btn-reveal').disabled=false; } } },500); }
+function updateTimerUI(){
+  const r=remaining(), m=Math.floor(r/60), s=r%60;
+  const disp=document.getElementById('timer-disp'), prog=document.getElementById('timer-prog');
+  disp.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  prog.style.width=Math.round(r/session.total_seconds*100)+'%';
+  const urgent=r<=60&&r>0;
+  disp.className='timer-display'+(urgent?' urgent':'');
+  prog.className='progress-fill'+(urgent?' urgent':'');
+  document.getElementById('btn-timer').innerHTML=session.running?'⏸ Pauze':'▶ Start';
+  if(r===0) document.getElementById('btn-reveal').disabled=false;
+}
+
+/* ---------- Fases ---------- */
+async function setPhase(p){
+  session.phase=p;
+  if(['revealed','voting','done'].includes(p) && ONLINE){
+    const priv=cards.filter(c=>c.is_private);
+    for(const c of priv){ await SB.from('cards').update({is_private:false}).eq('id',c.id); }
+  }
+  if(['revealed','voting','done'].includes(p)) cards.forEach(c=>c.is_private=false);
+  await pushSession();
+  if(!ONLINE) saveLocal();
+  render();
+}
+function applyPhaseUI(){
+  const b=document.getElementById('phase-badge'), m=document.getElementById('phase-msg');
+  document.querySelectorAll('[data-add]').forEach(el=>el.style.display=session.phase==='adding'?'block':'none');
+  b.className='phase-badge';
+  if(session.phase==='adding'){ b.textContent='Kaartjes aanmaken'; m.className='info-msg'; m.textContent='Voeg uw kaartjes toe. Ze blijven privé tot ze onthuld worden.'; }
+  if(session.phase==='revealed'){ b.textContent='Kaartjes zichtbaar'; b.classList.add('revealed'); m.className='info-msg blue'; m.textContent='Alle kaartjes zijn onthuld. Bespreek ze en start daarna het stemmen.'; }
+  if(session.phase==='voting'){ b.textContent='Stemfase'; b.classList.add('voting'); m.className='info-msg warn'; m.textContent='Stem op kaartjes van anderen — '+VOTES_PER_COL+' stemmen per kolom.'; }
+  if(session.phase==='done'){ b.textContent='Afgerond'; b.classList.add('done'); m.className='info-msg'; m.textContent='Sessie afgerond. Exporteer de resultaten via de menubalk.'; }
+  document.getElementById('btn-reveal').disabled=session.phase!=='adding';
+  document.getElementById('btn-vote').disabled=session.phase!=='revealed';
+}
+
+/* ---------- Render ---------- */
+function render(){
+  if(!session) return;
+  applyPhaseUI(); updateTimerUI();
+  cards.forEach(c=>{ if(c.author) participants.add(c.author); });
+  ['plus','minus','actie'].forEach(col=>{
+    const list=document.getElementById('list-'+col);
+    let cc=cards.filter(c=>c.col===col);
+    if(['voting','done'].includes(session.phase)) cc=[...cc].sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length);
+    list.innerHTML = cc.length?'':'<div style="font-size:12px;color:#aaa;text-align:center;padding:12px">Nog geen kaartjes</div>';
+    cc.forEach(c=>{
+      const hidden=c.is_private && c.author!==me.name, mine=c.author===me.name, vs=(c.voters||[]);
+      const d=document.createElement('div');
+      d.className='card'+(hidden?' private':'')+(mine&&!hidden?' mine':'');
+      let h='<div class="card-author">👤 '+esc(c.author)+(mine?' (u)':'');
+      if(mine&&session.phase==='adding') h+='<span class="del-x" onclick="deleteCard(\''+c.id+'\')">✕</span>';
+      h+='</div>';
+      h+=hidden?'<div class="card-text locked">🔒 Privé — zichtbaar na onthullen</div>':'<div class="card-text">'+esc(c.content)+'</div>';
+      if(c.is_private&&mine&&session.phase==='adding') h+='<div class="card-actions"><span class="private-label">🔒 Privé</span></div>';
+      if(session.phase==='voting'&&!hidden){ const v=vs.includes(me.name); h+='<div class="card-actions"><button class="vote-btn'+(v?' voted':'')+'" onclick="voteCard(\''+c.id+'\')"'+(mine?' disabled':'')+'>♥ '+vs.length+'</button>'+(mine?'<span style="font-size:11px;color:#aaa">eigen kaartje</span>':'')+'</div>'; }
+      else if(['revealed','done'].includes(session.phase)&&!hidden&&vs.length) h+='<div class="card-actions"><span class="vote-count-pill">♥ '+vs.length+'</span></div>';
+      d.innerHTML=h; list.appendChild(d);
+    });
+    document.getElementById('c-'+col).textContent=cc.length+' kaartje'+(cc.length!==1?'s':'');
+    document.getElementById('s-'+col).textContent=cc.length;
+  });
+  document.getElementById('s-deeln').textContent=participants.size;
+}
+
+/* ---------- Delen / export ---------- */
+function copyInvite(){
+  const url=location.origin+location.pathname+'#'+session.code;
+  const txt='Doe mee aan de retrospectief "'+session.title+'".\nLink: '+url+'\nCode: '+session.code;
+  navigator.clipboard?.writeText(txt).then(()=>{ const b=document.getElementById('btn-invite'); b.innerHTML='✓ Gekopieerd'; setTimeout(()=>b.innerHTML='🔗 Code delen',1500); },()=>alert(txt));
+}
+function exportResults(){
+  let o='RETROSPECTIEF: '+session.title+'\nCode: '+session.code+'\nDeelnemers: '+[...participants].join(', ')+'\n\n';
+  const T={plus:'GING GOED',minus:'VERBETERPUNTEN',actie:'ACTIEPUNTEN'};
+  ['plus','minus','actie'].forEach(col=>{ o+='== '+T[col]+' ==\n'; const cc=cards.filter(c=>c.col===col).sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length); o+=cc.length?'':'(geen)\n'; cc.forEach(c=>o+='['+(c.voters||[]).length+' ♥] '+c.content+'  — '+c.author+'\n'); o+='\n'; });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o],{type:'text/plain'})); a.download='retro-'+session.code+'.txt'; a.click();
+}
+
+window.addEventListener('load',()=>{ const h=location.hash.replace('#','').toUpperCase(); if(h){ switchTab('join'); document.getElementById('join-code').value=h; } });
+</script>
+</body>
+</html>
