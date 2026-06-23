@@ -51,7 +51,7 @@
   .info-msg.warn{ background:#fef3cd; border-color:#ffc107; color:#856404; }
   .info-msg.blue{ background:#e0eefb; border-color:#9cc4ee; color:#1f5fa5; }
 
-  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .stats{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
   .stat-card{ background:#fff; border:1px solid #d0d5c8; border-radius:3px; padding:10px 14px; text-align:center; }
   .stat-val{ font-size:22px; font-weight:700; color:var(--groen); }
   .stat-lbl{ font-size:11px; color:#666; margin-top:2px; }
@@ -67,6 +67,9 @@
   .col-actie .column-title{ color:#a04000; }
   .col-plus .column-title{ color:#1a6b35; }
   .col-count{ font-size:11px; color:#888; }
+  .reveal-col{ font-family:inherit; font-size:11px; font-weight:600; color:#fff; background:var(--groen); border:none; border-radius:11px; padding:3px 10px; cursor:pointer; }
+  .reveal-col:hover{ background:var(--groen-mid); }
+  .col-revealed{ font-size:11px; color:var(--groen-mid); font-weight:600; }
   .edit-col{ cursor:pointer; color:#bbb; font-size:13px; margin-left:6px; display:none; }
   .edit-col:hover{ color:var(--groen); }
   .column-title:hover .edit-col.admin{ display:inline; }
@@ -147,8 +150,7 @@
       <button class="nav-btn" id="btn-timer" onclick="toggleTimer()">▶ Start</button>
       <button class="nav-btn" onclick="resetTimer()">↻ Reset</button>
       <span class="nav-sep"></span>
-      <button class="nav-btn" id="btn-reveal" onclick="setPhase('revealed')" disabled>👁 Onthullen</button>
-      <button class="nav-btn" id="btn-vote" onclick="setPhase('voting')" disabled>♥ Stemmen</button>
+      <button class="nav-btn" id="btn-vote" onclick="setPhase('voting')">♥ Stemmen</button>
       <button class="nav-btn" id="btn-done" onclick="setPhase('done')">✓ Afronden</button>
       <span class="nav-sep"></span>
       <button class="nav-btn" onclick="exportResults()">⬇ Exporteren</button>
@@ -175,8 +177,10 @@
     </div>
     <div id="pane-join">
       <label>Uw naam</label><input id="join-name" placeholder="Bijv. Marie Jansen" maxlength="40">
-      <label>Sessiecode</label><input id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase">
-      <p class="hint">Vraag de code aan de beheerder die de sessie heeft aangemaakt.</p>
+      <div id="join-code-wrap">
+        <label>Sessiecode</label><input id="join-code" placeholder="Bijv. ABC123" maxlength="6" style="text-transform:uppercase">
+        <p class="hint">Vraag de code aan de beheerder die de sessie heeft aangemaakt.</p>
+      </div>
       <div class="modal-footer"><button class="btn" onclick="joinSession()">Deelnemen</button></div>
     </div>
     <div id="pane-new" style="display:none">
@@ -225,22 +229,23 @@
       <div class="stat-card"><div class="stat-val" id="s-plus" style="color:#1a6b35">0</div><div class="stat-lbl" id="sl-plus">Ging goed</div></div>
       <div class="stat-card"><div class="stat-val" id="s-minus" style="color:var(--rood)">0</div><div class="stat-lbl" id="sl-minus">Verbeterpunten</div></div>
       <div class="stat-card"><div class="stat-val" id="s-actie" style="color:var(--oranje)">0</div><div class="stat-lbl" id="sl-actie">Actiepunten</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-actions" style="color:var(--groen-donker)">0</div><div class="stat-lbl">Actiepunten (lijst)</div></div>
       <div class="stat-card"><div class="stat-val" id="s-deeln">1</div><div class="stat-lbl">Deelnemers</div></div>
     </div>
     <div class="info-msg" id="phase-msg">Voeg uw kaartjes toe. Ze blijven privé tot ze onthuld worden.</div>
     <div class="columns">
-      <div class="column col-plus"><div class="column-header"><div class="column-title"><span id="t-plus">Ging goed</span><span class="edit-col" id="e-plus" onclick="editCol('plus')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-plus">0</span></div>
+      <div class="column col-plus"><div class="column-header"><div class="column-title"><span id="t-plus">Ging goed</span><span class="edit-col" id="e-plus" onclick="editCol('plus')" title="Naam wijzigen">✎</span></div><div style="display:flex;align-items:center;gap:8px"><button class="reveal-col" id="rv-plus" onclick="revealColumn('plus')" style="display:none">Onthullen</button><span class="col-count" id="c-plus">0</span></div></div>
         <div class="cards-list" id="list-plus"></div>
         <div class="add-card" data-add="plus"><textarea id="in-plus" placeholder="Voeg een kaartje toe…"></textarea>
-          <div class="add-card-footer"><label><input type="checkbox" id="pr-plus" checked> Privé houden</label><button class="btn small" onclick="addCard('plus')">+ Toevoegen</button></div></div></div>
-      <div class="column col-minus"><div class="column-header"><div class="column-title"><span id="t-minus">Verbeterpunten</span><span class="edit-col" id="e-minus" onclick="editCol('minus')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-minus">0</span></div>
+          <div class="add-card-footer"><label id="prl-plus"><input type="checkbox" id="pr-plus" checked> Privé houden</label><button class="btn small" onclick="addCard('plus')">+ Toevoegen</button></div></div></div>
+      <div class="column col-minus"><div class="column-header"><div class="column-title"><span id="t-minus">Verbeterpunten</span><span class="edit-col" id="e-minus" onclick="editCol('minus')" title="Naam wijzigen">✎</span></div><div style="display:flex;align-items:center;gap:8px"><button class="reveal-col" id="rv-minus" onclick="revealColumn('minus')" style="display:none">Onthullen</button><span class="col-count" id="c-minus">0</span></div></div>
         <div class="cards-list" id="list-minus"></div>
         <div class="add-card" data-add="minus"><textarea id="in-minus" placeholder="Voeg een kaartje toe…"></textarea>
-          <div class="add-card-footer"><label><input type="checkbox" id="pr-minus" checked> Privé houden</label><button class="btn small" onclick="addCard('minus')">+ Toevoegen</button></div></div></div>
-      <div class="column col-actie"><div class="column-header"><div class="column-title"><span id="t-actie">Actiepunten</span><span class="edit-col" id="e-actie" onclick="editCol('actie')" title="Naam wijzigen">✎</span></div><span class="col-count" id="c-actie">0</span></div>
+          <div class="add-card-footer"><label id="prl-minus"><input type="checkbox" id="pr-minus" checked> Privé houden</label><button class="btn small" onclick="addCard('minus')">+ Toevoegen</button></div></div></div>
+      <div class="column col-actie"><div class="column-header"><div class="column-title"><span id="t-actie">Actiepunten</span><span class="edit-col" id="e-actie" onclick="editCol('actie')" title="Naam wijzigen">✎</span></div><div style="display:flex;align-items:center;gap:8px"><button class="reveal-col" id="rv-actie" onclick="revealColumn('actie')" style="display:none">Onthullen</button><span class="col-count" id="c-actie">0</span></div></div>
         <div class="cards-list" id="list-actie"></div>
         <div class="add-card" data-add="actie"><textarea id="in-actie" placeholder="Voeg een kaartje toe…"></textarea>
-          <div class="add-card-footer"><label><input type="checkbox" id="pr-actie" checked> Privé houden</label><button class="btn small" onclick="addCard('actie')">+ Toevoegen</button></div></div></div>
+          <div class="add-card-footer"><label id="prl-actie"><input type="checkbox" id="pr-actie" checked> Privé houden</label><button class="btn small" onclick="addCard('actie')">+ Toevoegen</button></div></div></div>
     </div>
 
     <!-- ============ ACTIEPUNTEN-OVERZICHT ============ -->
@@ -269,16 +274,18 @@ const ONLINE = !!SB;
 const VOTES_PER_COL = 3;
 
 const DEFAULT_COLS = { plus:'Ging goed', minus:'Verbeterpunten', actie:'Actiepunten' };
+const DEFAULT_REVEALED = { plus:false, minus:false, actie:false };
 
 let me = { name:'' };
 let isAdmin = false;         // alleen de aanmaker/beheerder van de sessie is beheerder
-let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase,columns }
+let session = null;          // { code,title,total_seconds,remaining_seconds,running,deadline,phase,columns,revealed }
 let cards = [];              // [{id,session_code,col,content,author,is_private,voters}]
 let actions = [];            // [{id,session_code,title,description,owner,due_date}]
 let participants = new Set();
 let roomKey = '';
 let channel = null;          // BroadcastChannel (lokale modus)
 let tick = null;
+let linkCode = '';           // sessiecode uit een gedeelde link (#CODE)
 
 /* ---------- Setup ---------- */
 function switchTab(t){
@@ -288,6 +295,7 @@ function switchTab(t){
   });
 }
 function cols(){ return (session && session.columns) ? session.columns : DEFAULT_COLS; }
+function rev(){ return (session && session.revealed) ? session.revealed : DEFAULT_REVEALED; }
 function genCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<6;i++) r+=c[Math.floor(Math.random()*c.length)]; return r; }
 const val=id=>document.getElementById(id).value.trim();
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -306,7 +314,7 @@ async function createSession(){
     minus: val('new-col-minus')||DEFAULT_COLS.minus,
     actie: val('new-col-actie')||DEFAULT_COLS.actie
   };
-  session={ code:genCode(), title, total_seconds:mins*60, remaining_seconds:mins*60, running:false, deadline:null, phase:'adding', columns };
+  session={ code:genCode(), title, total_seconds:mins*60, remaining_seconds:mins*60, running:false, deadline:null, phase:'adding', columns, revealed:{plus:false,minus:false,actie:false} };
   cards=[];
   if(ONLINE){
     const {error}=await SB.from('sessions').insert(session);
@@ -316,7 +324,8 @@ async function createSession(){
 }
 
 async function joinSession(){
-  const name=val('join-name'), code=val('join-code').toUpperCase();
+  const name=val('join-name');
+  const code=(linkCode || val('join-code')).toUpperCase();
   if(!name) return alert('Vul uw naam in.');
   if(!code) return alert('Vul de sessiecode in.');
   me.name=name; isAdmin=false;
@@ -331,11 +340,13 @@ async function joinSession(){
     if(!raw) return alert('Sessie niet gevonden op dit apparaat. Zonder Supabase werkt sync alleen tussen tabbladen op hetzelfde apparaat.');
     const s=JSON.parse(raw); session=s.session; cards=s.cards;
   }
+  if(!session.revealed) session.revealed={plus:false,minus:false,actie:false};
   await enterSession();
 }
 
 async function enterSession(){
   roomKey='retro_'+session.code;
+  if(!session.revealed) session.revealed={plus:false,minus:false,actie:false};
   if(ONLINE){
     const {data:ad,error:ae}=await SB.from('actions').select('*').eq('session_code',session.code);
     actions = (!ae && ad) ? ad : [];
@@ -351,6 +362,8 @@ async function enterSession(){
   // Beheerder-functies tonen
   document.getElementById('btn-clear').style.display = isAdmin?'inline-flex':'none';
   document.getElementById('btn-add-action').style.display = isAdmin?'inline-flex':'none';
+  document.getElementById('btn-vote').style.display = isAdmin?'inline-flex':'none';
+  document.getElementById('btn-done').style.display = isAdmin?'inline-flex':'none';
   ['plus','minus','actie'].forEach(c=>{ if(isAdmin) document.getElementById('e-'+c).classList.add('admin'); });
   participants.add(me.name);
   await subscribe();
@@ -385,6 +398,7 @@ async function openExisting(code){
   const {data,error}=await SB.from('sessions').select('*').eq('code',code).single();
   if(error||!data) return alert('Sessie niet gevonden.');
   session=data;
+  if(!session.revealed) session.revealed={plus:false,minus:false,actie:false};
   const {data:cd}=await SB.from('cards').select('*').eq('session_code',code); cards=cd||[];
   await enterSession();
 }
@@ -424,10 +438,28 @@ function saveLocal(){ localStorage.setItem(roomKey,JSON.stringify({session,cards
 /* ---------- Kaartjes ---------- */
 async function addCard(col){
   const ta=document.getElementById('in-'+col); const content=ta.value.trim(); if(!content) return;
-  const card={ id:session.code+'-'+Date.now()+'-'+Math.floor(Math.random()*999), session_code:session.code, col, content, author:me.name, is_private:document.getElementById('pr-'+col).checked, voters:[] };
+  // Is de kolom al onthuld? Dan is een nieuw kaartje direct zichtbaar.
+  const priv = rev()[col] ? false : document.getElementById('pr-'+col).checked;
+  const card={ id:session.code+'-'+Date.now()+'-'+Math.floor(Math.random()*999), session_code:session.code, col, content, author:me.name, is_private:priv, voters:[] };
   ta.value='';
   if(ONLINE){ const {error}=await SB.from('cards').insert(card); if(error) alert(error.message); }
   else { cards.push(card); saveLocal(); render(); }
+}
+
+/* ---------- Kolom onthullen (alleen beheerder) ---------- */
+async function revealColumn(col){
+  if(!isAdmin) return;
+  const revealed = { ...rev(), [col]:true };
+  session.revealed = revealed;
+  // Bestaande privé-kaartjes in deze kolom permanent zichtbaar maken
+  if(ONLINE){
+    const priv=cards.filter(c=>c.col===col && c.is_private);
+    for(const c of priv){ await SB.from('cards').update({is_private:false}).eq('id',c.id); }
+  }
+  cards.forEach(c=>{ if(c.col===col) c.is_private=false; });
+  await pushSession();
+  if(!ONLINE) saveLocal();
+  render();
 }
 async function deleteCard(id){
   const c=cards.find(x=>x.id===id); if(!c||c.author!==me.name) return;
@@ -518,7 +550,7 @@ function remaining(){
   if(session.running && session.deadline) return Math.max(0,Math.ceil((session.deadline-Date.now())/1000));
   return session.remaining_seconds;
 }
-function startTick(){ if(tick) clearInterval(tick); tick=setInterval(()=>{ if(session){ updateTimerUI(); if(session.running && remaining()<=0){ session.running=false; session.deadline=null; session.remaining_seconds=0; document.getElementById('btn-reveal').disabled=false; } } },500); }
+function startTick(){ if(tick) clearInterval(tick); tick=setInterval(()=>{ if(session){ updateTimerUI(); if(session.running && remaining()<=0){ session.running=false; session.deadline=null; session.remaining_seconds=0; } } },500); }
 function updateTimerUI(){
   const r=remaining(), m=Math.floor(r/60), s=r%60;
   const disp=document.getElementById('timer-disp'), prog=document.getElementById('timer-prog');
@@ -528,7 +560,6 @@ function updateTimerUI(){
   disp.className='timer-display'+(urgent?' urgent':'');
   prog.className='progress-fill'+(urgent?' urgent':'');
   document.getElementById('btn-timer').innerHTML=session.running?'⏸ Pauze':'▶ Start';
-  if(r===0) document.getElementById('btn-reveal').disabled=false;
 }
 
 /* ---------- Kolomnamen wijzigen (alleen beheerder) ---------- */
@@ -545,28 +576,41 @@ async function editCol(col){
   render();
 }
 
-/* ---------- Fases ---------- */
+/* ---------- Fases (stemmen / afronden) ---------- */
 async function setPhase(p){
+  if(!isAdmin) return;
   session.phase=p;
-  if(['revealed','voting','done'].includes(p) && ONLINE){
-    const priv=cards.filter(c=>c.is_private);
-    for(const c of priv){ await SB.from('cards').update({is_private:false}).eq('id',c.id); }
+  if(['voting','done'].includes(p)){
+    // Bij stemmen/afronden alle kolommen onthullen en alle kaartjes zichtbaar maken
+    session.revealed={plus:true,minus:true,actie:true};
+    if(ONLINE){
+      const priv=cards.filter(c=>c.is_private);
+      for(const c of priv){ await SB.from('cards').update({is_private:false}).eq('id',c.id); }
+    }
+    cards.forEach(c=>c.is_private=false);
   }
-  if(['revealed','voting','done'].includes(p)) cards.forEach(c=>c.is_private=false);
   await pushSession();
   if(!ONLINE) saveLocal();
   render();
 }
 function applyPhaseUI(){
   const b=document.getElementById('phase-badge'), m=document.getElementById('phase-msg');
-  document.querySelectorAll('[data-add]').forEach(el=>el.style.display=session.phase==='adding'?'block':'none');
+  // Kaartjes toevoegen kan zolang we niet aan het stemmen/afronden zijn (ook na onthullen).
+  const canAdd = session.phase==='adding';
+  document.querySelectorAll('[data-add]').forEach(el=>el.style.display=canAdd?'block':'none');
   b.className='phase-badge';
-  if(session.phase==='adding'){ b.textContent='Kaartjes aanmaken'; m.className='info-msg'; m.textContent='Voeg uw kaartjes toe. Ze blijven privé tot ze onthuld worden.'; }
-  if(session.phase==='revealed'){ b.textContent='Kaartjes zichtbaar'; b.classList.add('revealed'); m.className='info-msg blue'; m.textContent='Alle kaartjes zijn onthuld. Bespreek ze en start daarna het stemmen.'; }
+  if(session.phase==='adding'){ b.textContent='Kaartjes aanmaken'; m.className='info-msg'; m.textContent='Voeg kaartjes toe. Privé kaartjes worden zichtbaar zodra de beheerder de kolom onthult; daarna toegevoegde kaartjes zijn meteen zichtbaar.'; }
   if(session.phase==='voting'){ b.textContent='Stemfase'; b.classList.add('voting'); m.className='info-msg warn'; m.textContent='Stem op kaartjes van anderen — '+VOTES_PER_COL+' stemmen per kolom.'; }
   if(session.phase==='done'){ b.textContent='Afgerond'; b.classList.add('done'); m.className='info-msg'; m.textContent='Sessie afgerond. Exporteer de resultaten via de menubalk.'; }
-  document.getElementById('btn-reveal').disabled=session.phase!=='adding';
-  document.getElementById('btn-vote').disabled=session.phase!=='revealed';
+  // Per-kolom onthul-knoppen (alleen beheerder, alleen in de aanmaak-fase)
+  ['plus','minus','actie'].forEach(col=>{
+    const btn=document.getElementById('rv-'+col); if(!btn) return;
+    if(isAdmin && session.phase==='adding' && !rev()[col]){ btn.style.display='inline-block'; btn.textContent='Onthullen'; }
+    else if(rev()[col]){ btn.style.display='inline-block'; btn.disabled=true; btn.textContent='✓ Onthuld'; btn.style.background='transparent'; btn.style.color='var(--groen-mid)'; btn.style.cursor='default'; }
+    else btn.style.display='none';
+    // Privé-keuze verbergen zodra de kolom onthuld is
+    const prl=document.getElementById('prl-'+col); if(prl) prl.style.visibility = rev()[col]?'hidden':'visible';
+  });
 }
 
 /* ---------- Render ---------- */
@@ -594,13 +638,14 @@ function render(){
       h+=hidden?'<div class="card-text locked">🔒 Privé — zichtbaar na onthullen</div>':'<div class="card-text">'+esc(c.content)+'</div>';
       if(c.is_private&&mine&&session.phase==='adding') h+='<div class="card-actions"><span class="private-label">🔒 Privé</span></div>';
       if(session.phase==='voting'&&!hidden){ const v=vs.includes(me.name); h+='<div class="card-actions"><button class="vote-btn'+(v?' voted':'')+'" onclick="voteCard(\''+c.id+'\')"'+(mine?' disabled':'')+'>♥ '+vs.length+'</button>'+(mine?'<span style="font-size:11px;color:#aaa">eigen kaartje</span>':'')+'</div>'; }
-      else if(['revealed','done'].includes(session.phase)&&!hidden&&vs.length) h+='<div class="card-actions"><span class="vote-count-pill">♥ '+vs.length+'</span></div>';
+      else if(session.phase==='done'&&!hidden&&vs.length) h+='<div class="card-actions"><span class="vote-count-pill">♥ '+vs.length+'</span></div>';
       if(isAdmin&&!hidden) h+='<div class="card-actions"><button class="vote-btn" style="border-color:#154a03;color:#154a03" onclick="openActionForm(\''+c.id+'\')">→ Maak actiepunt</button></div>';
       d.innerHTML=h; list.appendChild(d);
     });
     document.getElementById('c-'+col).textContent=cc.length+' kaartje'+(cc.length!==1?'s':'');
     document.getElementById('s-'+col).textContent=cc.length;
   });
+  document.getElementById('s-actions').textContent=actions.length;
   document.getElementById('s-deeln').textContent=participants.size;
   renderActions();
 }
@@ -641,7 +686,16 @@ function exportResults(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o],{type:'text/plain'})); a.download='retro-'+session.code+'.txt'; a.click();
 }
 
-window.addEventListener('load',()=>{ const h=location.hash.replace('#','').toUpperCase(); if(h){ switchTab('join'); document.getElementById('join-code').value=h; } });
+window.addEventListener('load',()=>{
+  const h=location.hash.replace('#','').toUpperCase();
+  if(h){
+    linkCode=h;
+    switchTab('join');
+    // Code is al bekend via de link: alleen naar de naam vragen.
+    const wrap=document.getElementById('join-code-wrap'); if(wrap) wrap.style.display='none';
+    const tabs=document.querySelector('.tab-row'); if(tabs) tabs.style.display='none';
+  }
+});
 </script>
 </body>
 </html>
