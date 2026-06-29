@@ -153,7 +153,7 @@
       <button class="nav-btn" id="btn-vote" onclick="setPhase('voting')">♥ Stemmen</button>
       <button class="nav-btn" id="btn-done" onclick="setPhase('done')">✓ Afronden</button>
       <span class="nav-sep"></span>
-      <button class="nav-btn" onclick="exportResults()">⬇ Exporteren</button>
+      <button class="nav-btn" onclick="exportResults()">⬇ Exporteren (Markdown)</button>
       <button class="nav-btn" id="btn-clear" onclick="clearAllCards()" style="display:none">🗑 Kaartjes wissen</button>
       <button class="nav-btn primary" id="btn-invite" onclick="copyInvite()">🔗 Code delen</button>
     </div>
@@ -677,13 +677,32 @@ function copyInvite(){
   navigator.clipboard?.writeText(txt).then(()=>{ const b=document.getElementById('btn-invite'); b.innerHTML='✓ Gekopieerd'; setTimeout(()=>b.innerHTML='🔗 Code delen',1500); },()=>alert(txt));
 }
 function exportResults(){
-  let o='RETROSPECTIEF: '+session.title+'\nCode: '+session.code+'\nDeelnemers: '+[...participants].join(', ')+'\n\n';
-  const T={plus:'GING GOED',minus:'VERBETERPUNTEN',actie:'ACTIEPUNTEN'}; void T;
-  ['plus','minus','actie'].forEach(col=>{ o+='== '+(cols()[col]||col).toUpperCase()+' ==\n'; const cc=cards.filter(c=>c.col===col).sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length); o+=cc.length?'':'(geen)\n'; cc.forEach(c=>o+='['+(c.voters||[]).length+' ♥] '+c.content+'  — '+c.author+'\n'); o+='\n'; });
-  o+='== ACTIEPUNTEN ==\n';
-  if(!actions.length) o+='(geen)\n';
-  actions.forEach(a=>{ o+='• '+(a.title||'')+(a.owner?'  (eigenaar: '+a.owner+')':'')+(a.due_date?'  [streefdatum: '+a.due_date+']':'')+'\n'; if(a.description) o+='   '+a.description.replace(/\n/g,'\n   ')+'\n'; });
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o],{type:'text/plain'})); a.download='retro-'+session.code+'.txt'; a.click();
+  const today=new Date().toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  const mdEsc=s=>String(s==null?'':s).replace(/\|/g,'\\|').replace(/\n+/g,' ');
+  let o='# Retrospectief: '+(session.title||'')+'\n\n';
+  o+='- **Sessiecode:** '+session.code+'\n';
+  o+='- **Datum export:** '+today+'\n';
+  o+='- **Deelnemers:** '+([...participants].join(', ')||'—')+'\n\n';
+
+  ['plus','minus','actie'].forEach(col=>{
+    o+='## '+(cols()[col]||col)+'\n\n';
+    const cc=cards.filter(c=>c.col===col).sort((a,b)=>(b.voters||[]).length-(a.voters||[]).length);
+    if(!cc.length){ o+='_Geen kaartjes._\n\n'; return; }
+    o+='| Stemmen | Kaartje | Auteur |\n|:---:|:---|:---|\n';
+    cc.forEach(c=>{ o+='| '+(c.voters||[]).length+' | '+mdEsc(c.content)+' | '+mdEsc(c.author)+' |\n'; });
+    o+='\n';
+  });
+
+  o+='## Actiepunten\n\n';
+  if(!actions.length){ o+='_Geen actiepunten._\n'; }
+  else {
+    const sorted=[...actions].sort((a,b)=>{ if(!a.due_date) return 1; if(!b.due_date) return -1; return a.due_date<b.due_date?-1:1; });
+    o+='| Titel | Omschrijving | Eigenaar | Streefdatum |\n|:---|:---|:---|:---|\n';
+    sorted.forEach(a=>{ o+='| '+mdEsc(a.title)+' | '+mdEsc(a.description||'—')+' | '+mdEsc(a.owner||'—')+' | '+(a.due_date||'—')+' |\n'; });
+  }
+  o+='\n';
+
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([o],{type:'text/markdown'})); a.download='retro-'+session.code+'.md'; a.click();
 }
 
 window.addEventListener('load',()=>{
